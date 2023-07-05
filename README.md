@@ -61,6 +61,29 @@ Key features of ArgoCD include:
 
 - **Rollback and History**: ArgoCD allows for easy rollbacks to previous versions of applications and maintains an audit trail of all changes made to the system. :rewind:
 
+Code Example:
+
+```
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: example-app
+  namespace: default
+spec:
+  source:
+    repoURL: https://github.com/example-org/example-repo.git
+    targetRevision: main
+    path: app/
+  destination:
+    server: https://kubernetes-api.example.com
+    namespace: production
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+```
+In this example, the ArgoCD Application resource is configured to deploy an application from a specific path within a Git repository (app/ directory). The destination is set to the production namespace on the Kubernetes cluster hosted at kubernetes-api.example.com. The syncPolicy ensures automated synchronization, including pruning of resources not defined in the Git repository and self-healing capabilities.
+
 ### Flux
 
 Flux is another widely used GitOps tool that focuses on Kubernetes application deployments and infrastructure management. It integrates seamlessly with Kubernetes and automates the deployment and synchronization process using Git as the source of truth. :arrows_counterclockwise:
@@ -76,6 +99,29 @@ Key features of Flux include:
 - **Integration with Helm**: Flux supports Helm, a package manager for Kubernetes, enabling the deployment of Helm charts directly from Git repositories. :helmet_with_white_cross:
 
 These tools, ArgoCD and Flux, provide powerful capabilities for implementing GitOps workflows in Kubernetes environments. They simplify the management and deployment of applications, enabling teams to achieve faster and more reliable software delivery. :rocket:
+
+Code Example:
+```
+apiVersion: source.toolkit.fluxcd.io/v1beta1
+kind: GitRepository
+metadata:
+  name: example-repo
+  namespace: default
+spec:
+  url: https://github.com/example-org/example-repo.git
+  ref:
+    branch: main
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1beta1
+kind: Kustomization
+metadata:
+  name: example-app
+  namespace: production
+spec:
+  path: ./kustomize
+  interval: 5m
+```
+In this example, the Flux GitRepository resource is configured to watch the Git repository located at https://github.com/example-org/example-repo.git on the main branch. The Kustomization resource defines the application deployment using Kustomize, with the configuration located in the ./kustomize directory. The interval is set to 5 minutes, indicating that Flux will reconcile the state every 5 minutes.
 
 ## Puppet: Infrastructure Automation with GitOps
 
@@ -99,6 +145,31 @@ Puppet manifests and modules can be used to define Kubernetes resources, such as
 
 By combining Puppet's infrastructure automation capabilities with GitOps principles, you can achieve a unified approach to managing both applications and infrastructure in your Kubernetes environment. :gear: :rocket:
 
+Code Example:
+```
+class nginx {
+  package { 'nginx':
+    ensure => installed,
+  }
+
+  file { '/etc/nginx/nginx.conf':
+    ensure  => file,
+    owner   => 'root',
+    group   => 'root',
+    mode    => '0644',
+    source  => 'puppet:///modules/nginx/nginx.conf',
+    require => Package['nginx'],
+    notify  => Service['nginx'],
+  }
+
+  service { 'nginx':
+    ensure  => running,
+    enable  => true,
+    require => File['/etc/nginx/nginx.conf'],
+  }
+}
+```
+In this example, a Puppet class named nginx is defined. It ensures that the nginx package is installed, deploys the nginx.conf configuration file from the Puppet module's files directory, and ensures that the nginx service is running and enabled.
 ## Best Practices for GitOps with Puppet and Kubernetes
 
 To ensure a successful GitOps implementation with Puppet and Kubernetes, it's important to follow some best practices. Here are a few recommendations: :star:
